@@ -16,6 +16,7 @@ import {
   Clock,
   Upload,
   AlertTriangle,
+  TrendingUp,
 } from "lucide-react";
 
 type Vendor = {
@@ -67,6 +68,34 @@ function riskBadge(risk: string) {
     default:
       return <Badge variant="secondary">Medium</Badge>;
   }
+}
+
+/** Compliance score: % of vendors approved out of total */
+function ComplianceBar({ approved, total }: { approved: number; total: number }) {
+  const pct = total === 0 ? 0 : Math.round((approved / total) * 100);
+  const color = pct >= 80 ? "var(--vs-success)" : pct >= 50 ? "var(--vs-warning)" : "var(--vs-danger)";
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--vs-parchment-row)" }}>
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+      <span className="text-sm font-semibold tabular-nums" style={{ color, minWidth: 36 }}>{pct}%</span>
+      <span className="text-xs" style={{ color: "var(--vs-muted)" }}>compliant</span>
+    </div>
+  );
+}
+
+/** Animated pulse dot for pending items */
+function PulseDot() {
+  return (
+    <span className="relative flex h-2.5 w-2.5">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: "var(--vs-ember)" }} />
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: "var(--vs-ember)" }} />
+    </span>
+  );
 }
 
 export default function HomePage() {
@@ -127,7 +156,7 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.ok) {
-        setSubmitMsg(`Vendor ${companyName} submitted for review.`);
+        setSubmitMsg(`${companyName} queued for compliance review.`);
         setVendorEmail(""); setCompanyName(""); setCategory(""); setRiskLevel("medium");
         await fetchAll();
       } else {
@@ -152,7 +181,7 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.ok) {
-        setDocSubmitMsg(`Document "${documentName}" recorded successfully.`);
+        setDocSubmitMsg(`"${documentName}" added to compliance file.`);
         setDocVendorId(""); setDocumentName(""); setDocumentUrl(""); setDocumentType("");
         await fetchAll();
       } else {
@@ -176,7 +205,7 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.ok) {
-        setApproveMsg("Vendor approved successfully.");
+        setApproveMsg("Vendor cleared for onboarding.");
         setApproveVendorId(""); setReviewNote("");
         await fetchAll();
       } else {
@@ -209,31 +238,59 @@ export default function HomePage() {
 
   return (
     <div className="vs-page min-h-screen">
-      {/* Header */}
-      <header className="vs-header px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="vs-icon-accent h-7 w-7" />
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">VendorShield</h1>
-            <p className="text-xs opacity-60">Compliance &amp; Vendor Management Portal</p>
+      {/* Header — distinctive: Oswald display font for brand name, ember accent rule */}
+      <header className="vs-header px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg" style={{ background: "var(--vs-ember)" }}>
+              <ShieldCheck className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="font-bold tracking-tighter leading-none" style={{ fontFamily: "Oswald, Georgia, serif", fontSize: "1.5rem", letterSpacing: "-0.02em" }}>
+                VendorShield
+              </h1>
+              <p className="text-xs opacity-50 mt-0.5">Know every vendor before they touch your stack</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-sm opacity-75">
-            <Bell className="h-4 w-4" />
-            <span>{unreadNotifs} new</span>
+          <div className="flex items-center gap-5">
+            {/* Compliance score pill — distinctive product-specific element */}
+            {vendors.length > 0 && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+                <TrendingUp className="h-3.5 w-3.5" style={{ color: "var(--vs-ember)" }} />
+                <span className="text-xs font-medium opacity-80">
+                  {Math.round((approvedVendors.length / vendors.length) * 100)}% cleared
+                </span>
+              </div>
+            )}
+            {pendingVendors.length > 0 && (
+              <div className="flex items-center gap-2">
+                <PulseDot />
+                <span className="text-xs opacity-70">{pendingVendors.length} awaiting review</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 text-sm opacity-70">
+              <Bell className="h-4 w-4" />
+              <span>{unreadNotifs}</span>
+            </div>
           </div>
-          <Badge className="vs-badge-ember">
-            {vendors.length} Vendors
-          </Badge>
         </div>
       </header>
+
+      {/* Compliance score bar — unique to this product */}
+      {vendors.length > 0 && (
+        <div className="px-6 py-3" style={{ background: "var(--vs-forest)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="max-w-7xl mx-auto flex items-center gap-4">
+            <span className="text-xs font-medium opacity-50 shrink-0" style={{ color: "white" }}>Portfolio compliance</span>
+            <ComplianceBar approved={approvedVendors.length} total={vendors.length} />
+          </div>
+        </div>
+      )}
 
       <main className="px-6 py-6 max-w-7xl mx-auto space-y-8">
 
         {/* Dashboard Metrics */}
         <section aria-label="dashboard">
-          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Dashboard Overview</h2>
+          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Overview</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="vs-card">
               <CardContent className="pt-5 pb-4">
@@ -284,7 +341,7 @@ export default function HomePage() {
 
         {/* Vendor Registration */}
         <section aria-label="vendor onboarding">
-          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Vendor Registration</h2>
+          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Vendor Registration</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card className="vs-card">
               <CardHeader>
@@ -292,7 +349,7 @@ export default function HomePage() {
                   <Building2 className="vs-icon-accent h-5 w-5" />
                   Register Vendor
                 </CardTitle>
-                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Submit a new vendor for compliance review</p>
+                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Add a new vendor to your compliance pipeline</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleVendorSubmit} className="space-y-4">
@@ -311,13 +368,13 @@ export default function HomePage() {
                   <div>
                     <Label htmlFor="risk_level" className="text-sm font-medium">Risk Level</Label>
                     <select id="risk_level" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className="vs-select mt-1 w-full rounded-md border px-3 py-2 text-sm">
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
+                      <option value="low">Low — standard review</option>
+                      <option value="medium">Medium — enhanced review</option>
+                      <option value="high">High — full due diligence</option>
                     </select>
                   </div>
                   <Button type="submit" disabled={submitting} className="vs-btn-primary w-full font-medium">
-                    {submitting ? "Submitting..." : "Register Vendor"}
+                    {submitting ? "Queuing for review..." : "Register Vendor"}
                   </Button>
                   {submitMsg && (
                     <p className="text-sm mt-2" role="status" style={{ color: submitMsg.includes("failed") || submitMsg.includes("error") ? "var(--vs-danger)" : "var(--vs-success)" }}>
@@ -330,18 +387,27 @@ export default function HomePage() {
 
             <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="vs-section-heading text-base">Registered Vendors</CardTitle>
+                <CardTitle className="vs-section-heading text-base">Vendor Pipeline</CardTitle>
               </CardHeader>
               <CardContent>
                 {vendors.length === 0 ? (
-                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No vendors registered yet. Use the form to get started.</p>
+                  <div className="py-8 text-center">
+                    <Building2 className="h-8 w-8 mx-auto mb-2 opacity-20" style={{ color: "var(--vs-forest)" }} />
+                    <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No vendors in pipeline yet.</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--vs-muted)" }}>Register your first vendor to begin compliance tracking.</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {vendors.slice(0, 8).map((v) => (
                       <div key={v.id} className="vs-row-divider flex items-center justify-between py-2 last:border-0">
-                        <div>
-                          <p className="vs-section-heading text-sm font-medium">{v.companyName}</p>
-                          <p className="text-xs" style={{ color: "var(--vs-muted)" }}>{v.vendorEmail} &middot; {v.category}</p>
+                        <div className="flex items-center gap-2.5">
+                          {v.status === "pending" && <PulseDot />}
+                          {v.status === "approved" && <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />}
+                          {v.status === "rejected" && <span className="h-2.5 w-2.5 rounded-full bg-red-500 shrink-0" />}
+                          <div>
+                            <p className="vs-section-heading text-sm font-medium">{v.companyName}</p>
+                            <p className="text-xs" style={{ color: "var(--vs-muted)" }}>{v.vendorEmail} &middot; {v.category}</p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {riskBadge(v.riskLevel)}
@@ -358,7 +424,7 @@ export default function HomePage() {
 
         {/* Document Management */}
         <section aria-label="document upload">
-          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Document Management</h2>
+          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Document Management</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card className="vs-card">
               <CardHeader>
@@ -366,7 +432,7 @@ export default function HomePage() {
                   <Upload className="vs-icon-accent h-5 w-5" />
                   Upload &amp; Record Document
                 </CardTitle>
-                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Attach a compliance document to a vendor</p>
+                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Attach compliance evidence to a vendor file</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleDocSubmit} className="space-y-4">
@@ -390,7 +456,7 @@ export default function HomePage() {
                     <Input id="document_type" placeholder="insurance, contract, license..." value={documentType} onChange={(e) => setDocumentType(e.target.value)} required className="mt-1" />
                   </div>
                   <Button type="submit" disabled={docSubmitting} className="vs-btn-primary w-full font-medium">
-                    {docSubmitting ? "Saving..." : "Save Document"}
+                    {docSubmitting ? "Filing document..." : "Save Document"}
                   </Button>
                   {docSubmitMsg && (
                     <p className="text-sm mt-2" role="status" style={{ color: docSubmitMsg.includes("failed") || docSubmitMsg.includes("error") ? "var(--vs-danger)" : "var(--vs-success)" }}>
@@ -403,11 +469,14 @@ export default function HomePage() {
 
             <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="vs-section-heading text-base">Uploaded Documents</CardTitle>
+                <CardTitle className="vs-section-heading text-base">Compliance File</CardTitle>
               </CardHeader>
               <CardContent>
                 {documents.length === 0 ? (
-                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No documents recorded yet.</p>
+                  <div className="py-8 text-center">
+                    <FileCheck className="h-8 w-8 mx-auto mb-2 opacity-20" style={{ color: "var(--vs-forest)" }} />
+                    <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No documents on file yet.</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {documents.slice(0, 10).map((d) => (
@@ -429,14 +498,17 @@ export default function HomePage() {
 
         {/* Admin Approval */}
         <section aria-label="admin approval">
-          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Admin Approval</h2>
+          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Admin Approval</h2>
           <div className="space-y-4">
             <Card className="vs-card">
               <CardHeader>
                 <CardTitle className="vs-section-heading flex items-center gap-2 text-base">
                   <ShieldCheck className="vs-icon-accent h-5 w-5" />
-                  Review &amp; Approve Vendor
+                  Clear or Reject Vendor
                 </CardTitle>
+                <p className="text-xs" style={{ color: "var(--vs-muted)" }}>
+                  Cleared vendors are added to the approved supply chain. Rejections are recorded with full audit trail.
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-[1fr_2fr_auto_auto] gap-3 items-end">
@@ -451,10 +523,10 @@ export default function HomePage() {
                   </div>
                   <div>
                     <Label htmlFor="review_note" className="text-sm font-medium">Reviewer Note</Label>
-                    <Input id="review_note" placeholder="Approved for canary" value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} className="mt-1" />
+                    <Input id="review_note" placeholder="e.g. Approved for canary — docs verified" value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} className="mt-1" />
                   </div>
                   <Button onClick={() => approveVendorId && handleApprove(approveVendorId, reviewNote)} disabled={approving || !approveVendorId} className="vs-btn-success" aria-label="Approve vendor">
-                    {approving ? "Approving..." : "Approve"}
+                    {approving ? "Clearing..." : "Approve"}
                   </Button>
                   <Button onClick={() => approveVendorId && handleReject(approveVendorId)} disabled={approving || !approveVendorId} variant="destructive" aria-label="Reject vendor">
                     Reject
@@ -470,7 +542,7 @@ export default function HomePage() {
 
             <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="vs-section-heading text-base">Vendor Review Queue</CardTitle>
+                <CardTitle className="vs-section-heading text-base">Review Queue</CardTitle>
               </CardHeader>
               <CardContent>
                 {vendors.length === 0 ? (
@@ -484,9 +556,9 @@ export default function HomePage() {
                           <th className="vs-section-heading text-left py-2 pr-4 font-medium">Category</th>
                           <th className="vs-section-heading text-left py-2 pr-4 font-medium">Risk</th>
                           <th className="vs-section-heading text-left py-2 pr-4 font-medium">Status</th>
-                          <th className="vs-section-heading text-left py-2 pr-4 font-medium">Documents</th>
-                          <th className="vs-section-heading text-left py-2 font-medium">Reviewer Note</th>
-                          <th className="vs-section-heading text-left py-2 pl-4 font-medium">Updated</th>
+                          <th className="vs-section-heading text-left py-2 pr-4 font-medium">Docs</th>
+                          <th className="vs-section-heading text-left py-2 font-medium">Note</th>
+                          <th className="vs-section-heading text-left py-2 pl-4 font-medium">Date</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -524,17 +596,21 @@ export default function HomePage() {
 
         {/* Notifications */}
         <section aria-label="notifications activity">
-          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Notification Activity</h2>
+          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Notification Activity</h2>
           <Card className="vs-card">
             <CardHeader>
               <CardTitle className="vs-section-heading flex items-center gap-2 text-base">
                 <Bell className="vs-icon-accent h-5 w-5" />
-                Recent Activity &amp; Notifications
+                Audit Trail &amp; Notifications
               </CardTitle>
+              <p className="text-xs" style={{ color: "var(--vs-muted)" }}>Every vendor action is logged for compliance audit.</p>
             </CardHeader>
             <CardContent>
               {notifications.length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No activity recorded yet.</p>
+                <div className="py-8 text-center">
+                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" style={{ color: "var(--vs-forest)" }} />
+                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No activity yet. Events appear here as vendors move through compliance.</p>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {notifications.slice(0, 15).map((n) => (
@@ -542,7 +618,7 @@ export default function HomePage() {
                       <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${n.status === "unread" ? "vs-notif-dot-active" : "vs-notif-dot-read"}`} />
                       <div className="flex-1">
                         <p className="text-sm" style={{ color: "var(--vs-text)" }}>{n.message}</p>
-                        <p className="text-xs mt-0.5" style={{ color: "var(--vs-muted)" }}>{n.type} &middot; {new Date(n.createdAt).toLocaleString()}</p>
+                        <p className="text-xs mt-0.5 font-mono" style={{ color: "var(--vs-muted)" }}>{n.type} &middot; {new Date(n.createdAt).toLocaleString()}</p>
                       </div>
                       {n.status === "unread" && <Badge variant="outline" className="text-xs shrink-0">New</Badge>}
                     </div>
