@@ -70,28 +70,26 @@ function riskBadge(risk: string) {
   }
 }
 
-/** Compliance score: % of vendors approved out of total */
 function ComplianceBar({ approved, total }: { approved: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((approved / total) * 100);
   const color = pct >= 80 ? "var(--vs-success)" : pct >= 50 ? "var(--vs-warning)" : "var(--vs-danger)";
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--vs-parchment-row)" }}>
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <span className="text-sm font-semibold tabular-nums" style={{ color, minWidth: 36 }}>{pct}%</span>
-      <span className="text-xs" style={{ color: "var(--vs-muted)" }}>compliant</span>
+      <span className="text-xs font-semibold tabular-nums" style={{ color, minWidth: 36 }}>{pct}%</span>
+      <span className="text-xs opacity-50" style={{ color: "white" }}>portfolio compliance</span>
     </div>
   );
 }
 
-/** Animated pulse dot for pending items */
 function PulseDot() {
   return (
-    <span className="relative flex h-2.5 w-2.5">
+    <span className="relative flex h-2.5 w-2.5 shrink-0">
       <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: "var(--vs-ember)" }} />
       <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: "var(--vs-ember)" }} />
     </span>
@@ -238,26 +236,27 @@ export default function HomePage() {
 
   return (
     <div className="vs-page min-h-screen">
-      {/* Header — distinctive: Oswald display font for brand name, ember accent rule */}
-      <header className="vs-header px-6 py-4">
+      {/* Header */}
+      <header className="vs-header px-6 py-5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center h-10 w-10 rounded-lg" style={{ background: "var(--vs-ember)" }}>
+            <div className="flex items-center justify-center h-11 w-11 rounded-xl" style={{ background: "var(--vs-ember)" }}>
               <ShieldCheck className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="font-bold tracking-tighter leading-none" style={{ fontFamily: "Oswald, Georgia, serif", fontSize: "1.5rem", letterSpacing: "-0.02em" }}>
+              <h1 className="vs-display" style={{ fontSize: "1.75rem", color: "white" }}>
                 VendorShield
               </h1>
-              <p className="text-xs opacity-50 mt-0.5">Know every vendor before they touch your stack</p>
+              <p className="text-xs mt-0.5" style={{ color: "rgba(245,244,239,0.5)", letterSpacing: "0.04em" }}>
+                Know every vendor before they touch your stack
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-5">
-            {/* Compliance score pill — distinctive product-specific element */}
             {vendors.length > 0 && (
               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
                 <TrendingUp className="h-3.5 w-3.5" style={{ color: "var(--vs-ember)" }} />
-                <span className="text-xs font-medium opacity-80">
+                <span className="text-xs font-medium" style={{ color: "rgba(245,244,239,0.8)" }}>
                   {Math.round((approvedVendors.length / vendors.length) * 100)}% cleared
                 </span>
               </div>
@@ -265,41 +264,36 @@ export default function HomePage() {
             {pendingVendors.length > 0 && (
               <div className="flex items-center gap-2">
                 <PulseDot />
-                <span className="text-xs opacity-70">{pendingVendors.length} awaiting review</span>
+                <span className="text-xs" style={{ color: "rgba(245,244,239,0.6)" }}>{pendingVendors.length} awaiting review</span>
               </div>
             )}
-            <div className="flex items-center gap-1.5 text-sm opacity-70">
+            <div className="flex items-center gap-1.5 text-sm" style={{ color: "rgba(245,244,239,0.6)" }}>
               <Bell className="h-4 w-4" />
               <span>{unreadNotifs}</span>
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Compliance score bar — unique to this product */}
-      {vendors.length > 0 && (
-        <div className="px-6 py-3" style={{ background: "var(--vs-forest)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="max-w-7xl mx-auto flex items-center gap-4">
-            <span className="text-xs font-medium opacity-50 shrink-0" style={{ color: "white" }}>Portfolio compliance</span>
+        {vendors.length > 0 && (
+          <div className="max-w-7xl mx-auto mt-4">
             <ComplianceBar approved={approvedVendors.length} total={vendors.length} />
           </div>
-        </div>
-      )}
+        )}
+      </header>
 
-      <main className="px-6 py-6 max-w-7xl mx-auto space-y-8">
+      <main className="px-6 py-8 max-w-7xl mx-auto space-y-10">
 
         {/* Dashboard Metrics */}
         <section aria-label="dashboard">
-          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Overview</h2>
+          <h2 className="vs-display vs-section-heading text-lg mb-4" style={{ letterSpacing: "-0.01em" }}>Dashboard</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="vs-card">
               <CardContent className="pt-5 pb-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Total Vendors</p>
-                    <p className="vs-section-heading text-3xl font-bold mt-1">{vendors.length}</p>
+                    <p className="vs-display vs-section-heading text-4xl mt-1">{vendors.length}</p>
                   </div>
-                  <Building2 className="vs-section-heading h-5 w-5 mt-1" />
+                  <Building2 className="vs-section-heading h-5 w-5 mt-1 opacity-40" />
                 </div>
               </CardContent>
             </Card>
@@ -308,9 +302,9 @@ export default function HomePage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Pending Review</p>
-                    <p className="text-3xl font-bold mt-1 text-amber-600">{pendingVendors.length}</p>
+                    <p className="vs-display text-4xl mt-1 text-amber-600">{pendingVendors.length}</p>
                   </div>
-                  <Clock className="text-amber-600 h-5 w-5 mt-1" />
+                  <Clock className="text-amber-600 h-5 w-5 mt-1 opacity-40" />
                 </div>
               </CardContent>
             </Card>
@@ -319,9 +313,9 @@ export default function HomePage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Approved</p>
-                    <p className="text-3xl font-bold mt-1 text-emerald-700">{approvedVendors.length}</p>
+                    <p className="vs-display text-4xl mt-1 text-emerald-700">{approvedVendors.length}</p>
                   </div>
-                  <CheckCircle className="text-emerald-700 h-5 w-5 mt-1" />
+                  <CheckCircle className="text-emerald-700 h-5 w-5 mt-1 opacity-40" />
                 </div>
               </CardContent>
             </Card>
@@ -330,9 +324,9 @@ export default function HomePage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Documents</p>
-                    <p className="vs-icon-accent text-3xl font-bold mt-1">{documents.length}</p>
+                    <p className="vs-display vs-icon-accent text-4xl mt-1">{documents.length}</p>
                   </div>
-                  <FileCheck className="vs-icon-accent h-5 w-5 mt-1" />
+                  <FileCheck className="vs-icon-accent h-5 w-5 mt-1 opacity-40" />
                 </div>
               </CardContent>
             </Card>
@@ -341,7 +335,7 @@ export default function HomePage() {
 
         {/* Vendor Registration */}
         <section aria-label="vendor onboarding">
-          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Vendor Registration</h2>
+          <h2 className="vs-display vs-section-heading text-lg mb-4" style={{ letterSpacing: "-0.01em" }}>Vendor Registration</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card className="vs-card">
               <CardHeader>
@@ -349,7 +343,7 @@ export default function HomePage() {
                   <Building2 className="vs-icon-accent h-5 w-5" />
                   Register Vendor
                 </CardTitle>
-                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Add a new vendor to your compliance pipeline</p>
+                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Add a vendor to your compliance pipeline</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleVendorSubmit} className="space-y-4">
@@ -391,8 +385,8 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 {vendors.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Building2 className="h-8 w-8 mx-auto mb-2 opacity-20" style={{ color: "var(--vs-forest)" }} />
+                  <div className="py-10 text-center">
+                    <Building2 className="h-9 w-9 mx-auto mb-3 opacity-15" style={{ color: "var(--vs-forest)" }} />
                     <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No vendors in pipeline yet.</p>
                     <p className="text-xs mt-1" style={{ color: "var(--vs-muted)" }}>Register your first vendor to begin compliance tracking.</p>
                   </div>
@@ -424,7 +418,7 @@ export default function HomePage() {
 
         {/* Document Management */}
         <section aria-label="document upload">
-          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Document Management</h2>
+          <h2 className="vs-display vs-section-heading text-lg mb-4" style={{ letterSpacing: "-0.01em" }}>Document Management</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card className="vs-card">
               <CardHeader>
@@ -473,8 +467,8 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 {documents.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <FileCheck className="h-8 w-8 mx-auto mb-2 opacity-20" style={{ color: "var(--vs-forest)" }} />
+                  <div className="py-10 text-center">
+                    <FileCheck className="h-9 w-9 mx-auto mb-3 opacity-15" style={{ color: "var(--vs-forest)" }} />
                     <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No documents on file yet.</p>
                   </div>
                 ) : (
@@ -498,7 +492,7 @@ export default function HomePage() {
 
         {/* Admin Approval */}
         <section aria-label="admin approval">
-          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Admin Approval</h2>
+          <h2 className="vs-display vs-section-heading text-lg mb-4" style={{ letterSpacing: "-0.01em" }}>Admin Approval</h2>
           <div className="space-y-4">
             <Card className="vs-card">
               <CardHeader>
@@ -507,7 +501,7 @@ export default function HomePage() {
                   Clear or Reject Vendor
                 </CardTitle>
                 <p className="text-xs" style={{ color: "var(--vs-muted)" }}>
-                  Cleared vendors are added to the approved supply chain. Rejections are recorded with full audit trail.
+                  Cleared vendors join your approved supply chain. Every decision is logged with full audit trail.
                 </p>
               </CardHeader>
               <CardContent>
@@ -596,20 +590,21 @@ export default function HomePage() {
 
         {/* Notifications */}
         <section aria-label="notifications activity">
-          <h2 className="vs-section-heading text-xs font-semibold uppercase tracking-widest mb-3 opacity-60">Notification Activity</h2>
+          <h2 className="vs-display vs-section-heading text-lg mb-4" style={{ letterSpacing: "-0.01em" }}>Notification Activity</h2>
           <Card className="vs-card">
             <CardHeader>
               <CardTitle className="vs-section-heading flex items-center gap-2 text-base">
                 <Bell className="vs-icon-accent h-5 w-5" />
                 Audit Trail &amp; Notifications
               </CardTitle>
-              <p className="text-xs" style={{ color: "var(--vs-muted)" }}>Every vendor action is logged for compliance audit.</p>
+              <p className="text-xs" style={{ color: "var(--vs-muted)" }}>Every vendor action is immutably logged for compliance audit.</p>
             </CardHeader>
             <CardContent>
               {notifications.length === 0 ? (
-                <div className="py-8 text-center">
-                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" style={{ color: "var(--vs-forest)" }} />
-                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No activity yet. Events appear here as vendors move through compliance.</p>
+                <div className="py-10 text-center">
+                  <Bell className="h-9 w-9 mx-auto mb-3 opacity-15" style={{ color: "var(--vs-forest)" }} />
+                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No activity yet.</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--vs-muted)" }}>Events appear here as vendors move through compliance stages.</p>
                 </div>
               ) : (
                 <div className="space-y-2">

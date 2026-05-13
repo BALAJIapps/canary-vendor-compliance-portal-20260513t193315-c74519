@@ -36,6 +36,10 @@
   --vs-success: #16A34A;
   --vs-warning: #D97706;
   --vs-danger: #DC2626;
+
+  /* Brand typography */
+  --font-display: 'Oswald', Georgia, serif;
+  --font-body: 'Ubuntu', system-ui, sans-serif;
 }
 
 .dark {
@@ -82,7 +86,7 @@
   --color-ring: var(--ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius));
+  --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
@@ -94,6 +98,7 @@
     background-color: var(--background);
     color: var(--foreground);
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-body);
   }
 }
 
@@ -106,12 +111,23 @@
 .vs-page {
   background: var(--vs-parchment);
   color: var(--vs-text);
-  font-family: Ubuntu, system-ui, sans-serif;
+  font-family: var(--font-body);
+}
+
+.vs-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .vs-card {
   background: white;
   border: 1px solid var(--vs-parchment-border);
+  transition: box-shadow 0.15s ease;
+}
+
+.vs-card:hover {
+  box-shadow: 0 2px 8px rgba(7, 44, 44, 0.08);
 }
 
 .vs-row-divider {
@@ -129,11 +145,26 @@
 .vs-btn-primary {
   background: var(--vs-forest);
   color: white;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.vs-btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.vs-btn-primary:active:not(:disabled) {
+  transform: translateY(0px);
 }
 
 .vs-btn-success {
   background: var(--vs-success);
   color: white;
+  transition: opacity 0.15s ease;
+}
+
+.vs-btn-success:hover:not(:disabled) {
+  opacity: 0.88;
 }
 
 .vs-badge-ember {
@@ -145,18 +176,7 @@
 .vs-select {
   border-color: var(--vs-parchment-border);
   background: white;
-}
-
-.vs-tab-active {
-  background: var(--vs-forest);
-  color: var(--vs-parchment);
-  border-bottom: 2px solid var(--vs-ember);
-}
-
-.vs-tab-inactive {
-  background: transparent;
-  color: var(--vs-subtle);
-  border-bottom: 2px solid transparent;
+  font-family: var(--font-body);
 }
 
 .vs-stat-label {
