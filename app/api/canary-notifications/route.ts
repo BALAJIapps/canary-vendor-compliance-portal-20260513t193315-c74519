@@ -3,17 +3,30 @@ import { db } from "@/db";
 import { canaryNotifications } from "@/db/schema";
 import { desc } from "drizzle-orm";
 
-export async function GET() {
+function sanitizeText(s: unknown, maxLen = 255): string | null {
+  if (typeof s !== "string") return null;
+  const trimmed = s.trim().slice(0, maxLen);
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const limit = Math.min(parseInt(searchParams.get("limit") ?? "50", 10), 100);
+    const offset = Math.max(parseInt(searchParams.get("offset") ?? "0", 10), 0);
+
     const notifications = await db
       .select()
       .from(canaryNotifications)
-      .orderBy(desc(canaryNotifications.createdAt));
+      .orderBy(desc(canaryNotifications.createdAt))
+      .limit(limit)
+      .offset(offset);
+
     return Response.json({ ok: true, notifications });
   } catch (err) {
     console.error("GET /api/canary-notifications error:", err);
     return Response.json(
-      { ok: false, error: { code: "SERVER_ERROR", message: String(err) } },
+      { ok: false, error: { code: "SERVER_ERROR", message: "An unexpected error occurred" } },
       { status: 500 }
     );
   }
@@ -22,7 +35,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { vendor_id, type, message } = body;
+
+    const type = sanitizeText(body.type, 100);
+    const message = sanitizeText(body.message, 1000);
+    const vendor_id = sanitizeText(body.vendor_id, 36);
 
     if (!type || !message) {
       return Response.json(
@@ -45,7 +61,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("POST /api/canary-notifications error:", err);
     return Response.json(
-      { ok: false, error: { code: "SERVER_ERROR", message: String(err) } },
+      { ok: false, error: { code: "SERVER_ERROR", message: "An unexpected error occurred" } },
       { status: 500 }
     );
   }

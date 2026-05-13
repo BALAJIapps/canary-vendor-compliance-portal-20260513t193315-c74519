@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Building2,
   FileCheck,
@@ -21,16 +20,12 @@ import {
 
 type Vendor = {
   id: string;
-  vendor_email: string;
   vendorEmail: string;
-  company_name: string;
   companyName: string;
   category: string;
-  risk_level: string;
   riskLevel: string;
   status: string;
-  reviewNote?: string;
-  review_note?: string;
+  reviewNote?: string | null;
   createdAt: string;
 };
 
@@ -45,7 +40,7 @@ type VendorDocument = {
 
 type Notification = {
   id: string;
-  vendorId?: string;
+  vendorId?: string | null;
   type: string;
   message: string;
   status: string;
@@ -80,7 +75,6 @@ export default function HomePage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState<"onboard" | "documents" | "admin" | "dashboard">("onboard");
 
-  // Vendor onboarding form
   const [vendorEmail, setVendorEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [category, setCategory] = useState("");
@@ -88,7 +82,6 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
 
-  // Document record form
   const [docVendorId, setDocVendorId] = useState("");
   const [documentName, setDocumentName] = useState("");
   const [documentUrl, setDocumentUrl] = useState("");
@@ -96,29 +89,32 @@ export default function HomePage() {
   const [docSubmitting, setDocSubmitting] = useState(false);
   const [docSubmitMsg, setDocSubmitMsg] = useState("");
 
-  // Approval
   const [approveVendorId, setApproveVendorId] = useState("");
   const [reviewNote, setReviewNote] = useState("");
   const [approving, setApproving] = useState(false);
   const [approveMsg, setApproveMsg] = useState("");
 
-  async function fetchAll() {
-    const [vRes, dRes, nRes] = await Promise.all([
-      fetch("/api/canary-vendors"),
-      fetch("/api/canary-vendor-documents"),
-      fetch("/api/canary-notifications"),
-    ]);
-    const [vData, dData, nData] = await Promise.all([
-      vRes.json(),
-      dRes.json(),
-      nRes.json(),
-    ]);
-    if (vData.ok) setVendors(vData.vendors);
-    if (dData.ok) setDocuments(dData.documents);
-    if (nData.ok) setNotifications(nData.notifications);
-  }
+  const fetchAll = useCallback(async () => {
+    try {
+      const [vRes, dRes, nRes] = await Promise.all([
+        fetch("/api/canary-vendors"),
+        fetch("/api/canary-vendor-documents"),
+        fetch("/api/canary-notifications"),
+      ]);
+      const [vData, dData, nData] = await Promise.all([
+        vRes.ok ? vRes.json() : { ok: false, vendors: [] },
+        dRes.ok ? dRes.json() : { ok: false, documents: [] },
+        nRes.ok ? nRes.json() : { ok: false, notifications: [] },
+      ]);
+      if (vData.ok) setVendors(vData.vendors);
+      if (dData.ok) setDocuments(dData.documents);
+      if (nData.ok) setNotifications(nData.notifications);
+    } catch (e) {
+      console.error("fetchAll error", e);
+    }
+  }, []);
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   async function handleVendorSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -128,12 +124,7 @@ export default function HomePage() {
       const res = await fetch("/api/canary-vendors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor_email: vendorEmail,
-          company_name: companyName,
-          category,
-          risk_level: riskLevel,
-        }),
+        body: JSON.stringify({ vendor_email: vendorEmail, company_name: companyName, category, risk_level: riskLevel }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -144,7 +135,7 @@ export default function HomePage() {
         setSubmitMsg(data.error?.message ?? "Submission failed");
       }
     } catch {
-      setSubmitMsg("Network error");
+      setSubmitMsg("Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -158,12 +149,7 @@ export default function HomePage() {
       const res = await fetch("/api/canary-vendor-documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor_id: docVendorId,
-          document_name: documentName,
-          document_url: documentUrl,
-          document_type: documentType,
-        }),
+        body: JSON.stringify({ vendor_id: docVendorId, document_name: documentName, document_url: documentUrl, document_type: documentType }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -174,7 +160,7 @@ export default function HomePage() {
         setDocSubmitMsg(data.error?.message ?? "Document save failed");
       }
     } catch {
-      setDocSubmitMsg("Network error");
+      setDocSubmitMsg("Network error. Please try again.");
     } finally {
       setDocSubmitting(false);
     }
@@ -191,14 +177,14 @@ export default function HomePage() {
       });
       const data = await res.json();
       if (data.ok) {
-        setApproveMsg(`Vendor approved successfully.`);
+        setApproveMsg("Vendor approved successfully.");
         setApproveVendorId(""); setReviewNote("");
         await fetchAll();
       } else {
         setApproveMsg(data.error?.message ?? "Approval failed");
       }
     } catch {
-      setApproveMsg("Network error");
+      setApproveMsg("Network error. Please try again.");
     } finally {
       setApproving(false);
     }
@@ -211,7 +197,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen" style={{ background: "#f5f4ef", color: "#111827", fontFamily: "Ubuntu, system-ui, sans-serif" }}>
-      {/* Header */}
       <header style={{ background: "#072C2C", color: "#f5f4ef" }} className="px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-7 w-7" style={{ color: "#FF5F03" }} />
@@ -231,13 +216,13 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Tab Navigation */}
       <nav className="px-6 pt-4 flex gap-1 border-b" style={{ borderColor: "#ddd8cc" }}>
         {(["onboard", "documents", "admin", "dashboard"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className="px-4 py-2 text-sm font-medium capitalize rounded-t transition-colors"
+            aria-pressed={activeTab === tab}
+            className="px-4 py-2 text-sm font-medium rounded-t transition-colors"
             style={{
               background: activeTab === tab ? "#072C2C" : "transparent",
               color: activeTab === tab ? "#f5f4ef" : "#555",
@@ -251,7 +236,6 @@ export default function HomePage() {
 
       <main className="px-6 py-6 max-w-6xl mx-auto">
 
-        {/* ONBOARD TAB */}
         {activeTab === "onboard" && (
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
@@ -266,62 +250,29 @@ export default function HomePage() {
                 <form onSubmit={handleVendorSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="vendor_email" className="text-sm font-medium">Vendor Email</Label>
-                    <Input
-                      id="vendor_email"
-                      type="email"
-                      placeholder="vendor@company.com"
-                      value={vendorEmail}
-                      onChange={(e) => setVendorEmail(e.target.value)}
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="vendor_email" type="email" placeholder="vendor@company.com" value={vendorEmail} onChange={(e) => setVendorEmail(e.target.value)} required className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="company_name" className="text-sm font-medium">Company Name</Label>
-                    <Input
-                      id="company_name"
-                      placeholder="Acme Supplies"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="company_name" placeholder="Acme Supplies" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="category" className="text-sm font-medium">Category</Label>
-                    <Input
-                      id="category"
-                      placeholder="Logistics, SaaS, Manufacturing..."
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="category" placeholder="Logistics, SaaS, Manufacturing..." value={category} onChange={(e) => setCategory(e.target.value)} required className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="risk_level" className="text-sm font-medium">Risk Level</Label>
-                    <select
-                      id="risk_level"
-                      value={riskLevel}
-                      onChange={(e) => setRiskLevel(e.target.value)}
-                      className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-                      style={{ borderColor: "#ddd8cc", background: "white" }}
-                    >
+                    <select id="risk_level" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: "#ddd8cc", background: "white" }}>
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
                     </select>
                   </div>
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full font-medium"
-                    style={{ background: "#072C2C", color: "white" }}
-                  >
+                  <Button type="submit" disabled={submitting} className="w-full font-medium" style={{ background: "#072C2C", color: "white" }}>
                     {submitting ? "Submitting..." : "Register Vendor"}
                   </Button>
                   {submitMsg && (
-                    <p className="text-sm mt-2" style={{ color: submitMsg.includes("failed") || submitMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
+                    <p className="text-sm mt-2" role="status" style={{ color: submitMsg.includes("failed") || submitMsg.includes("error") || submitMsg.includes("Error") ? "#DC2626" : "#16A34A" }}>
                       {submitMsg}
                     </p>
                   )}
@@ -329,7 +280,6 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* Recent vendors */}
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="text-base" style={{ color: "#072C2C" }}>Recent Vendors</CardTitle>
@@ -358,7 +308,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* DOCUMENTS TAB */}
         {activeTab === "documents" && (
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
@@ -373,63 +322,28 @@ export default function HomePage() {
                 <form onSubmit={handleDocSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="doc_vendor" className="text-sm font-medium">Vendor</Label>
-                    <select
-                      id="doc_vendor"
-                      value={docVendorId}
-                      onChange={(e) => setDocVendorId(e.target.value)}
-                      className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-                      style={{ borderColor: "#ddd8cc", background: "white" }}
-                      required
-                    >
+                    <select id="doc_vendor" value={docVendorId} onChange={(e) => setDocVendorId(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: "#ddd8cc", background: "white" }} required>
                       <option value="">Select vendor...</option>
-                      {vendors.map((v) => (
-                        <option key={v.id} value={v.id}>{v.companyName}</option>
-                      ))}
+                      {vendors.map((v) => (<option key={v.id} value={v.id}>{v.companyName}</option>))}
                     </select>
                   </div>
                   <div>
                     <Label htmlFor="document_name" className="text-sm font-medium">Document Name</Label>
-                    <Input
-                      id="document_name"
-                      placeholder="insurance.pdf"
-                      value={documentName}
-                      onChange={(e) => setDocumentName(e.target.value)}
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="document_name" placeholder="insurance.pdf" value={documentName} onChange={(e) => setDocumentName(e.target.value)} required className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="document_url" className="text-sm font-medium">Document URL</Label>
-                    <Input
-                      id="document_url"
-                      placeholder="https://example.com/doc.pdf"
-                      value={documentUrl}
-                      onChange={(e) => setDocumentUrl(e.target.value)}
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="document_url" placeholder="https://example.com/doc.pdf" value={documentUrl} onChange={(e) => setDocumentUrl(e.target.value)} required className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="document_type" className="text-sm font-medium">Document Type</Label>
-                    <Input
-                      id="document_type"
-                      placeholder="insurance, contract, license..."
-                      value={documentType}
-                      onChange={(e) => setDocumentType(e.target.value)}
-                      required
-                      className="mt-1"
-                    />
+                    <Input id="document_type" placeholder="insurance, contract, license..." value={documentType} onChange={(e) => setDocumentType(e.target.value)} required className="mt-1" />
                   </div>
-                  <Button
-                    type="submit"
-                    disabled={docSubmitting}
-                    className="w-full font-medium"
-                    style={{ background: "#072C2C", color: "white" }}
-                  >
+                  <Button type="submit" disabled={docSubmitting} className="w-full font-medium" style={{ background: "#072C2C", color: "white" }}>
                     {docSubmitting ? "Saving..." : "Save Document"}
                   </Button>
                   {docSubmitMsg && (
-                    <p className="text-sm mt-2" style={{ color: docSubmitMsg.includes("failed") || docSubmitMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
+                    <p className="text-sm mt-2" role="status" style={{ color: docSubmitMsg.includes("failed") || docSubmitMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
                       {docSubmitMsg}
                     </p>
                   )}
@@ -453,7 +367,7 @@ export default function HomePage() {
                           <p className="text-sm font-medium truncate" style={{ color: "#072C2C" }}>{d.documentName}</p>
                           <p className="text-xs" style={{ color: "#888" }}>{d.documentType}</p>
                         </div>
-                        <a href={d.documentUrl} target="_blank" rel="noreferrer" className="text-xs underline shrink-0" style={{ color: "#FF5F03" }}>View</a>
+                        <a href={d.documentUrl} target="_blank" rel="noreferrer noopener" className="text-xs underline shrink-0" style={{ color: "#FF5F03" }}>View</a>
                       </div>
                     ))}
                   </div>
@@ -463,10 +377,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ADMIN APPROVAL TAB */}
         {activeTab === "admin" && (
           <div className="space-y-6">
-            {/* Approve form */}
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
@@ -478,13 +390,7 @@ export default function HomePage() {
                 <div className="grid md:grid-cols-[1fr_2fr_auto] gap-3 items-end">
                   <div>
                     <Label htmlFor="approve_vendor" className="text-sm font-medium">Vendor</Label>
-                    <select
-                      id="approve_vendor"
-                      value={approveVendorId}
-                      onChange={(e) => setApproveVendorId(e.target.value)}
-                      className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-                      style={{ borderColor: "#ddd8cc", background: "white" }}
-                    >
+                    <select id="approve_vendor" value={approveVendorId} onChange={(e) => setApproveVendorId(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: "#ddd8cc", background: "white" }}>
                       <option value="">Select vendor...</option>
                       {vendors.filter((v) => v.status === "pending").map((v) => (
                         <option key={v.id} value={v.id}>{v.companyName}</option>
@@ -493,31 +399,20 @@ export default function HomePage() {
                   </div>
                   <div>
                     <Label htmlFor="review_note" className="text-sm font-medium">Reviewer Note</Label>
-                    <Input
-                      id="review_note"
-                      placeholder="Approved for canary"
-                      value={reviewNote}
-                      onChange={(e) => setReviewNote(e.target.value)}
-                      className="mt-1"
-                    />
+                    <Input id="review_note" placeholder="Approved for canary" value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} className="mt-1" />
                   </div>
-                  <Button
-                    onClick={() => approveVendorId && handleApprove(approveVendorId, reviewNote)}
-                    disabled={approving || !approveVendorId}
-                    style={{ background: "#16A34A", color: "white" }}
-                  >
+                  <Button onClick={() => approveVendorId && handleApprove(approveVendorId, reviewNote)} disabled={approving || !approveVendorId} style={{ background: "#16A34A", color: "white" }}>
                     {approving ? "Approving..." : "Approve"}
                   </Button>
                 </div>
                 {approveMsg && (
-                  <p className="text-sm mt-3" style={{ color: approveMsg.includes("failed") || approveMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
+                  <p className="text-sm mt-3" role="status" style={{ color: approveMsg.includes("failed") || approveMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
                     {approveMsg}
                   </p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Admin approval table */}
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="text-base" style={{ color: "#072C2C" }}>Vendor Review Queue</CardTitle>
@@ -555,7 +450,7 @@ export default function HomePage() {
                                 <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#f0ece3", color: "#072C2C" }}>{vendorDocs.length}</span>
                               </td>
                               <td className="py-2 pr-4 text-xs" style={{ color: "#666", maxWidth: 160 }}>
-                                {v.reviewNote ?? <span style={{ color: "#bbb" }}>—</span>}
+                                {v.reviewNote ?? <span style={{ color: "#bbb" }}>&mdash;</span>}
                               </td>
                               <td className="py-2 pl-4 text-xs" style={{ color: "#888" }}>
                                 {new Date(v.createdAt).toLocaleDateString()}
@@ -572,10 +467,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* DASHBOARD TAB */}
         {activeTab === "dashboard" && (
           <div className="space-y-6">
-            {/* Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: "Total Vendors", value: vendors.length, icon: Building2, color: "#072C2C" },
@@ -597,7 +490,6 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Notifications */}
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
