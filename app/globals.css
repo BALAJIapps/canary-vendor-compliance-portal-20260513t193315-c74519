@@ -23,6 +23,19 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
+
+  /* VendorShield brand tokens */
+  --vs-forest: #072C2C;
+  --vs-ember: #FF5F03;
+  --vs-parchment: #f5f4ef;
+  --vs-parchment-border: #ddd8cc;
+  --vs-parchment-row: #f0ece3;
+  --vs-text: #111827;
+  --vs-muted: #888888;
+  --vs-subtle: #666666;
+  --vs-success: #16A34A;
+  --vs-warning: #D97706;
+  --vs-danger: #DC2626;
 }
 
 .dark {
@@ -69,7 +82,7 @@
   --color-ring: var(--ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-lg: var(--radius));
   --radius-xl: calc(var(--radius) + 4px);
 }
 
@@ -82,4 +95,87 @@
     color: var(--foreground);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* VendorShield layout utilities */
+.vs-header {
+  background: var(--vs-forest);
+  color: var(--vs-parchment);
+}
+
+.vs-page {
+  background: var(--vs-parchment);
+  color: var(--vs-text);
+  font-family: Ubuntu, system-ui, sans-serif;
+}
+
+.vs-card {
+  background: white;
+  border: 1px solid var(--vs-parchment-border);
+}
+
+.vs-row-divider {
+  border-bottom: 1px solid var(--vs-parchment-row);
+}
+
+.vs-section-heading {
+  color: var(--vs-forest);
+}
+
+.vs-icon-accent {
+  color: var(--vs-ember);
+}
+
+.vs-btn-primary {
+  background: var(--vs-forest);
+  color: white;
+}
+
+.vs-btn-success {
+  background: var(--vs-success);
+  color: white;
+}
+
+.vs-badge-ember {
+  background: var(--vs-ember);
+  color: white;
+  border: none;
+}
+
+.vs-select {
+  border-color: var(--vs-parchment-border);
+  background: white;
+}
+
+.vs-tab-active {
+  background: var(--vs-forest);
+  color: var(--vs-parchment);
+  border-bottom: 2px solid var(--vs-ember);
+}
+
+.vs-tab-inactive {
+  background: transparent;
+  color: var(--vs-subtle);
+  border-bottom: 2px solid transparent;
+}
+
+.vs-stat-label {
+  color: var(--vs-muted);
+}
+
+.vs-doc-link {
+  color: var(--vs-ember);
+}
+
+.vs-notif-dot-active {
+  background: var(--vs-ember);
+}
+
+.vs-notif-dot-read {
+  background: #cccccc;
+}
+
+.vs-mono-chip {
+  background: var(--vs-parchment-row);
+  color: var(--vs-forest);
 }

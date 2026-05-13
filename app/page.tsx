@@ -74,7 +74,6 @@ export default function HomePage() {
   const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Vendor onboarding form
   const [vendorEmail, setVendorEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [category, setCategory] = useState("");
@@ -82,7 +81,6 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
 
-  // Document record form
   const [docVendorId, setDocVendorId] = useState("");
   const [documentName, setDocumentName] = useState("");
   const [documentUrl, setDocumentUrl] = useState("");
@@ -90,7 +88,6 @@ export default function HomePage() {
   const [docSubmitting, setDocSubmitting] = useState(false);
   const [docSubmitMsg, setDocSubmitMsg] = useState("");
 
-  // Approval
   const [approveVendorId, setApproveVendorId] = useState("");
   const [reviewNote, setReviewNote] = useState("");
   const [approving, setApproving] = useState(false);
@@ -197,7 +194,7 @@ export default function HomePage() {
       const res = await fetch(`/api/canary-vendors/${vendorId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ review_note: "Rejected by admin", status: "rejected" }),
+        body: JSON.stringify({ review_note: "Rejected by admin" }),
       });
       await res.json();
       await fetchAll();
@@ -211,11 +208,11 @@ export default function HomePage() {
   const unreadNotifs = notifications.filter((n) => n.status === "unread").length;
 
   return (
-    <div className="min-h-screen" style={{ background: "#f5f4ef", color: "#111827", fontFamily: "Ubuntu, system-ui, sans-serif" }}>
+    <div className="vs-page min-h-screen">
       {/* Header */}
-      <header style={{ background: "#072C2C", color: "#f5f4ef" }} className="px-6 py-4 flex items-center justify-between">
+      <header className="vs-header px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ShieldCheck className="h-7 w-7" style={{ color: "#FF5F03" }} />
+          <ShieldCheck className="vs-icon-accent h-7 w-7" />
           <div>
             <h1 className="text-lg font-semibold tracking-tight">VendorShield</h1>
             <p className="text-xs opacity-60">Compliance &amp; Vendor Management Portal</p>
@@ -226,7 +223,7 @@ export default function HomePage() {
             <Bell className="h-4 w-4" />
             <span>{unreadNotifs} new</span>
           </div>
-          <Badge style={{ background: "#FF5F03", color: "white", border: "none" }}>
+          <Badge className="vs-badge-ember">
             {vendors.length} Vendors
           </Badge>
         </div>
@@ -236,40 +233,66 @@ export default function HomePage() {
 
         {/* Dashboard Metrics */}
         <section aria-label="dashboard">
-          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Dashboard Overview</h2>
+          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Dashboard Overview</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "Total Vendors", value: vendors.length, icon: Building2, color: "#072C2C" },
-              { label: "Pending Review", value: pendingVendors.length, icon: Clock, color: "#D97706" },
-              { label: "Approved", value: approvedVendors.length, icon: CheckCircle, color: "#16A34A" },
-              { label: "Documents", value: documents.length, icon: FileCheck, color: "#FF5F03" },
-            ].map(({ label, value, icon: Icon, color }) => (
-              <Card key={label} style={{ background: "white", border: "1px solid #ddd8cc" }}>
-                <CardContent className="pt-5 pb-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "#888" }}>{label}</p>
-                      <p className="text-3xl font-bold mt-1" style={{ color }}>{value}</p>
-                    </div>
-                    <Icon className="h-5 w-5 mt-1" style={{ color }} />
+            <Card className="vs-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Total Vendors</p>
+                    <p className="vs-section-heading text-3xl font-bold mt-1">{vendors.length}</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  <Building2 className="vs-section-heading h-5 w-5 mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="vs-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Pending Review</p>
+                    <p className="text-3xl font-bold mt-1 text-amber-600">{pendingVendors.length}</p>
+                  </div>
+                  <Clock className="text-amber-600 h-5 w-5 mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="vs-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Approved</p>
+                    <p className="text-3xl font-bold mt-1 text-emerald-700">{approvedVendors.length}</p>
+                  </div>
+                  <CheckCircle className="text-emerald-700 h-5 w-5 mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="vs-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="vs-stat-label text-xs font-medium uppercase tracking-wide">Documents</p>
+                    <p className="vs-icon-accent text-3xl font-bold mt-1">{documents.length}</p>
+                  </div>
+                  <FileCheck className="vs-icon-accent h-5 w-5 mt-1" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
-        {/* Vendor Onboarding + Recent Vendors */}
+        {/* Vendor Registration */}
         <section aria-label="vendor onboarding">
-          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Vendor Registration</h2>
+          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Vendor Registration</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
-            <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+            <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
-                  <Building2 className="h-5 w-5" style={{ color: "#FF5F03" }} />
+                <CardTitle className="vs-section-heading flex items-center gap-2 text-base">
+                  <Building2 className="vs-icon-accent h-5 w-5" />
                   Register Vendor
                 </CardTitle>
-                <p className="text-sm" style={{ color: "#666" }}>Submit a new vendor for compliance review</p>
+                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Submit a new vendor for compliance review</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleVendorSubmit} className="space-y-4">
@@ -287,17 +310,17 @@ export default function HomePage() {
                   </div>
                   <div>
                     <Label htmlFor="risk_level" className="text-sm font-medium">Risk Level</Label>
-                    <select id="risk_level" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: "#ddd8cc", background: "white" }}>
+                    <select id="risk_level" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className="vs-select mt-1 w-full rounded-md border px-3 py-2 text-sm">
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
                     </select>
                   </div>
-                  <Button type="submit" disabled={submitting} className="w-full font-medium" style={{ background: "#072C2C", color: "white" }}>
+                  <Button type="submit" disabled={submitting} className="vs-btn-primary w-full font-medium">
                     {submitting ? "Submitting..." : "Register Vendor"}
                   </Button>
                   {submitMsg && (
-                    <p className="text-sm mt-2" role="status" style={{ color: submitMsg.includes("failed") || submitMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
+                    <p className="text-sm mt-2" role="status" style={{ color: submitMsg.includes("failed") || submitMsg.includes("error") ? "var(--vs-danger)" : "var(--vs-success)" }}>
                       {submitMsg}
                     </p>
                   )}
@@ -305,20 +328,20 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+            <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="text-base" style={{ color: "#072C2C" }}>Registered Vendors</CardTitle>
+                <CardTitle className="vs-section-heading text-base">Registered Vendors</CardTitle>
               </CardHeader>
               <CardContent>
                 {vendors.length === 0 ? (
-                  <p className="text-sm" style={{ color: "#888" }}>No vendors registered yet. Use the form to get started.</p>
+                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No vendors registered yet. Use the form to get started.</p>
                 ) : (
                   <div className="space-y-3">
                     {vendors.slice(0, 8).map((v) => (
-                      <div key={v.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: "#f0ece3" }}>
+                      <div key={v.id} className="vs-row-divider flex items-center justify-between py-2 last:border-0">
                         <div>
-                          <p className="text-sm font-medium" style={{ color: "#072C2C" }}>{v.companyName}</p>
-                          <p className="text-xs" style={{ color: "#888" }}>{v.vendorEmail} &middot; {v.category}</p>
+                          <p className="vs-section-heading text-sm font-medium">{v.companyName}</p>
+                          <p className="text-xs" style={{ color: "var(--vs-muted)" }}>{v.vendorEmail} &middot; {v.category}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           {riskBadge(v.riskLevel)}
@@ -333,23 +356,23 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Document Upload/Record */}
+        {/* Document Management */}
         <section aria-label="document upload">
-          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Document Management</h2>
+          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Document Management</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
-            <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+            <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
-                  <Upload className="h-5 w-5" style={{ color: "#FF5F03" }} />
+                <CardTitle className="vs-section-heading flex items-center gap-2 text-base">
+                  <Upload className="vs-icon-accent h-5 w-5" />
                   Upload &amp; Record Document
                 </CardTitle>
-                <p className="text-sm" style={{ color: "#666" }}>Attach a compliance document to a vendor</p>
+                <p className="text-sm" style={{ color: "var(--vs-subtle)" }}>Attach a compliance document to a vendor</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleDocSubmit} className="space-y-4">
                   <div>
                     <Label htmlFor="doc_vendor" className="text-sm font-medium">Vendor</Label>
-                    <select id="doc_vendor" value={docVendorId} onChange={(e) => setDocVendorId(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: "#ddd8cc", background: "white" }} required>
+                    <select id="doc_vendor" value={docVendorId} onChange={(e) => setDocVendorId(e.target.value)} className="vs-select mt-1 w-full rounded-md border px-3 py-2 text-sm" required>
                       <option value="">Select vendor...</option>
                       {vendors.map((v) => (<option key={v.id} value={v.id}>{v.companyName}</option>))}
                     </select>
@@ -366,11 +389,11 @@ export default function HomePage() {
                     <Label htmlFor="document_type" className="text-sm font-medium">Document Type</Label>
                     <Input id="document_type" placeholder="insurance, contract, license..." value={documentType} onChange={(e) => setDocumentType(e.target.value)} required className="mt-1" />
                   </div>
-                  <Button type="submit" disabled={docSubmitting} className="w-full font-medium" style={{ background: "#072C2C", color: "white" }}>
+                  <Button type="submit" disabled={docSubmitting} className="vs-btn-primary w-full font-medium">
                     {docSubmitting ? "Saving..." : "Save Document"}
                   </Button>
                   {docSubmitMsg && (
-                    <p className="text-sm mt-2" role="status" style={{ color: docSubmitMsg.includes("failed") || docSubmitMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
+                    <p className="text-sm mt-2" role="status" style={{ color: docSubmitMsg.includes("failed") || docSubmitMsg.includes("error") ? "var(--vs-danger)" : "var(--vs-success)" }}>
                       {docSubmitMsg}
                     </p>
                   )}
@@ -378,23 +401,23 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+            <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="text-base" style={{ color: "#072C2C" }}>Uploaded Documents</CardTitle>
+                <CardTitle className="vs-section-heading text-base">Uploaded Documents</CardTitle>
               </CardHeader>
               <CardContent>
                 {documents.length === 0 ? (
-                  <p className="text-sm" style={{ color: "#888" }}>No documents recorded yet.</p>
+                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No documents recorded yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {documents.slice(0, 10).map((d) => (
-                      <div key={d.id} className="flex items-start gap-3 py-2 border-b last:border-0" style={{ borderColor: "#f0ece3" }}>
-                        <FileCheck className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#FF5F03" }} />
+                      <div key={d.id} className="vs-row-divider flex items-start gap-3 py-2 last:border-0">
+                        <FileCheck className="vs-icon-accent h-4 w-4 mt-0.5 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate" style={{ color: "#072C2C" }}>{d.documentName}</p>
-                          <p className="text-xs" style={{ color: "#888" }}>{d.documentType}</p>
+                          <p className="vs-section-heading text-sm font-medium truncate">{d.documentName}</p>
+                          <p className="text-xs" style={{ color: "var(--vs-muted)" }}>{d.documentType}</p>
                         </div>
-                        <a href={d.documentUrl} target="_blank" rel="noreferrer noopener" className="text-xs underline shrink-0" style={{ color: "#FF5F03" }}>View</a>
+                        <a href={d.documentUrl} target="_blank" rel="noreferrer noopener" className="vs-doc-link text-xs underline shrink-0">View</a>
                       </div>
                     ))}
                   </div>
@@ -406,12 +429,12 @@ export default function HomePage() {
 
         {/* Admin Approval */}
         <section aria-label="admin approval">
-          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Admin Approval</h2>
+          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Admin Approval</h2>
           <div className="space-y-4">
-            <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+            <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
-                  <ShieldCheck className="h-5 w-5" style={{ color: "#FF5F03" }} />
+                <CardTitle className="vs-section-heading flex items-center gap-2 text-base">
+                  <ShieldCheck className="vs-icon-accent h-5 w-5" />
                   Review &amp; Approve Vendor
                 </CardTitle>
               </CardHeader>
@@ -419,7 +442,7 @@ export default function HomePage() {
                 <div className="grid md:grid-cols-[1fr_2fr_auto_auto] gap-3 items-end">
                   <div>
                     <Label htmlFor="approve_vendor" className="text-sm font-medium">Vendor</Label>
-                    <select id="approve_vendor" value={approveVendorId} onChange={(e) => setApproveVendorId(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: "#ddd8cc", background: "white" }}>
+                    <select id="approve_vendor" value={approveVendorId} onChange={(e) => setApproveVendorId(e.target.value)} className="vs-select mt-1 w-full rounded-md border px-3 py-2 text-sm">
                       <option value="">Select vendor...</option>
                       {vendors.filter((v) => v.status === "pending").map((v) => (
                         <option key={v.id} value={v.id}>{v.companyName}</option>
@@ -430,72 +453,61 @@ export default function HomePage() {
                     <Label htmlFor="review_note" className="text-sm font-medium">Reviewer Note</Label>
                     <Input id="review_note" placeholder="Approved for canary" value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} className="mt-1" />
                   </div>
-                  <Button
-                    onClick={() => approveVendorId && handleApprove(approveVendorId, reviewNote)}
-                    disabled={approving || !approveVendorId}
-                    aria-label="Approve vendor"
-                    style={{ background: "#16A34A", color: "white" }}
-                  >
+                  <Button onClick={() => approveVendorId && handleApprove(approveVendorId, reviewNote)} disabled={approving || !approveVendorId} className="vs-btn-success" aria-label="Approve vendor">
                     {approving ? "Approving..." : "Approve"}
                   </Button>
-                  <Button
-                    onClick={() => approveVendorId && handleReject(approveVendorId)}
-                    disabled={approving || !approveVendorId}
-                    variant="destructive"
-                    aria-label="Reject vendor"
-                  >
+                  <Button onClick={() => approveVendorId && handleReject(approveVendorId)} disabled={approving || !approveVendorId} variant="destructive" aria-label="Reject vendor">
                     Reject
                   </Button>
                 </div>
                 {approveMsg && (
-                  <p className="text-sm mt-3" role="status" style={{ color: approveMsg.includes("failed") || approveMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
+                  <p className="text-sm mt-3" role="status" style={{ color: approveMsg.includes("failed") || approveMsg.includes("error") ? "var(--vs-danger)" : "var(--vs-success)" }}>
                     {approveMsg}
                   </p>
                 )}
               </CardContent>
             </Card>
 
-            {/* Approval table */}
-            <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+            <Card className="vs-card">
               <CardHeader>
-                <CardTitle className="text-base" style={{ color: "#072C2C" }}>Vendor Review Queue</CardTitle>
+                <CardTitle className="vs-section-heading text-base">Vendor Review Queue</CardTitle>
               </CardHeader>
               <CardContent>
                 {vendors.length === 0 ? (
-                  <p className="text-sm" style={{ color: "#888" }}>No vendors to review.</p>
+                  <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No vendors to review.</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr style={{ borderBottom: "2px solid #f0ece3" }}>
-                          <th className="text-left py-2 pr-4 font-medium" style={{ color: "#072C2C" }}>Company</th>
-                          <th className="text-left py-2 pr-4 font-medium" style={{ color: "#072C2C" }}>Category</th>
-                          <th className="text-left py-2 pr-4 font-medium" style={{ color: "#072C2C" }}>Risk</th>
-                          <th className="text-left py-2 pr-4 font-medium" style={{ color: "#072C2C" }}>Status</th>
-                          <th className="text-left py-2 pr-4 font-medium" style={{ color: "#072C2C" }}>Documents</th>
-                          <th className="text-left py-2 font-medium" style={{ color: "#072C2C" }}>Reviewer Note</th>
-                          <th className="text-left py-2 pl-4 font-medium" style={{ color: "#072C2C" }}>Updated</th>
+                        <tr className="vs-row-divider" style={{ borderBottomWidth: 2 }}>
+                          <th className="vs-section-heading text-left py-2 pr-4 font-medium">Company</th>
+                          <th className="vs-section-heading text-left py-2 pr-4 font-medium">Category</th>
+                          <th className="vs-section-heading text-left py-2 pr-4 font-medium">Risk</th>
+                          <th className="vs-section-heading text-left py-2 pr-4 font-medium">Status</th>
+                          <th className="vs-section-heading text-left py-2 pr-4 font-medium">Documents</th>
+                          <th className="vs-section-heading text-left py-2 font-medium">Reviewer Note</th>
+                          <th className="vs-section-heading text-left py-2 pl-4 font-medium">Updated</th>
                         </tr>
                       </thead>
                       <tbody>
                         {vendors.map((v) => {
                           const vendorDocs = documents.filter((d) => d.vendorId === v.id);
                           return (
-                            <tr key={v.id} style={{ borderBottom: "1px solid #f0ece3" }}>
+                            <tr key={v.id} className="vs-row-divider">
                               <td className="py-2 pr-4">
-                                <p className="font-medium" style={{ color: "#072C2C" }}>{v.companyName}</p>
-                                <p className="text-xs" style={{ color: "#888" }}>{v.vendorEmail}</p>
+                                <p className="vs-section-heading font-medium">{v.companyName}</p>
+                                <p className="text-xs" style={{ color: "var(--vs-muted)" }}>{v.vendorEmail}</p>
                               </td>
-                              <td className="py-2 pr-4" style={{ color: "#555" }}>{v.category}</td>
+                              <td className="py-2 pr-4" style={{ color: "var(--vs-subtle)" }}>{v.category}</td>
                               <td className="py-2 pr-4">{riskBadge(v.riskLevel)}</td>
                               <td className="py-2 pr-4">{statusBadge(v.status)}</td>
                               <td className="py-2 pr-4">
-                                <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#f0ece3", color: "#072C2C" }}>{vendorDocs.length}</span>
+                                <span className="vs-mono-chip text-xs font-mono px-2 py-0.5 rounded">{vendorDocs.length}</span>
                               </td>
-                              <td className="py-2 pr-4 text-xs" style={{ color: "#666", maxWidth: 160 }}>
-                                {v.reviewNote ?? <span style={{ color: "#bbb" }}>&mdash;</span>}
+                              <td className="py-2 pr-4 text-xs" style={{ color: "var(--vs-subtle)", maxWidth: 160 }}>
+                                {v.reviewNote ?? <span style={{ color: "var(--vs-muted)" }}>&mdash;</span>}
                               </td>
-                              <td className="py-2 pl-4 text-xs" style={{ color: "#888" }}>
+                              <td className="py-2 pl-4 text-xs" style={{ color: "var(--vs-muted)" }}>
                                 {new Date(v.createdAt).toLocaleDateString()}
                               </td>
                             </tr>
@@ -510,27 +522,27 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Notifications / Activity */}
+        {/* Notifications */}
         <section aria-label="notifications activity">
-          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Notification Activity</h2>
-          <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+          <h2 className="vs-section-heading text-sm font-semibold uppercase tracking-wide mb-3">Notification Activity</h2>
+          <Card className="vs-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
-                <Bell className="h-5 w-5" style={{ color: "#FF5F03" }} />
+              <CardTitle className="vs-section-heading flex items-center gap-2 text-base">
+                <Bell className="vs-icon-accent h-5 w-5" />
                 Recent Activity &amp; Notifications
               </CardTitle>
             </CardHeader>
             <CardContent>
               {notifications.length === 0 ? (
-                <p className="text-sm" style={{ color: "#888" }}>No activity recorded yet.</p>
+                <p className="text-sm" style={{ color: "var(--vs-muted)" }}>No activity recorded yet.</p>
               ) : (
                 <div className="space-y-2">
                   {notifications.slice(0, 15).map((n) => (
-                    <div key={n.id} className="flex items-start gap-3 py-2 border-b last:border-0" style={{ borderColor: "#f0ece3" }}>
-                      <div className="mt-1 h-2 w-2 rounded-full shrink-0" style={{ background: n.status === "unread" ? "#FF5F03" : "#ccc" }} />
+                    <div key={n.id} className="vs-row-divider flex items-start gap-3 py-2 last:border-0">
+                      <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${n.status === "unread" ? "vs-notif-dot-active" : "vs-notif-dot-read"}`} />
                       <div className="flex-1">
-                        <p className="text-sm" style={{ color: "#111827" }}>{n.message}</p>
-                        <p className="text-xs mt-0.5" style={{ color: "#888" }}>{n.type} &middot; {new Date(n.createdAt).toLocaleString()}</p>
+                        <p className="text-sm" style={{ color: "var(--vs-text)" }}>{n.message}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--vs-muted)" }}>{n.type} &middot; {new Date(n.createdAt).toLocaleString()}</p>
                       </div>
                       {n.status === "unread" && <Badge variant="outline" className="text-xs shrink-0">New</Badge>}
                     </div>
