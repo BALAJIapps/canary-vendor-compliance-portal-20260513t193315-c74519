@@ -138,8 +138,15 @@
   color: var(--vs-forest);
 }
 
+/* Accent (ember) — reserved for logo bg and pending pulse dot only */
 .vs-icon-accent {
   color: var(--vs-ember);
+}
+
+/* Default icon color — forest, not ember */
+.vs-icon {
+  color: var(--vs-forest);
+  opacity: 0.6;
 }
 
 .vs-btn-primary {
@@ -184,7 +191,8 @@
 }
 
 .vs-doc-link {
-  color: var(--vs-ember);
+  color: var(--vs-forest);
+  opacity: 0.7;
 }
 
 .vs-notif-dot-active {
