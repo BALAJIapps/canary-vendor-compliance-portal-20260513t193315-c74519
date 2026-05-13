@@ -73,8 +73,8 @@ export default function HomePage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [documents, setDocuments] = useState<VendorDocument[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [activeTab, setActiveTab] = useState<"onboard" | "documents" | "admin" | "dashboard">("onboard");
 
+  // Vendor onboarding form
   const [vendorEmail, setVendorEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [category, setCategory] = useState("");
@@ -82,6 +82,7 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
 
+  // Document record form
   const [docVendorId, setDocVendorId] = useState("");
   const [documentName, setDocumentName] = useState("");
   const [documentUrl, setDocumentUrl] = useState("");
@@ -89,6 +90,7 @@ export default function HomePage() {
   const [docSubmitting, setDocSubmitting] = useState(false);
   const [docSubmitMsg, setDocSubmitMsg] = useState("");
 
+  // Approval
   const [approveVendorId, setApproveVendorId] = useState("");
   const [reviewNote, setReviewNote] = useState("");
   const [approving, setApproving] = useState(false);
@@ -190,13 +192,27 @@ export default function HomePage() {
     }
   }
 
+  async function handleReject(vendorId: string) {
+    try {
+      const res = await fetch(`/api/canary-vendors/${vendorId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ review_note: "Rejected by admin", status: "rejected" }),
+      });
+      await res.json();
+      await fetchAll();
+    } catch {
+      console.error("reject error");
+    }
+  }
+
   const pendingVendors = vendors.filter((v) => v.status === "pending");
   const approvedVendors = vendors.filter((v) => v.status === "approved");
-  const totalDocs = documents.length;
   const unreadNotifs = notifications.filter((n) => n.status === "unread").length;
 
   return (
     <div className="min-h-screen" style={{ background: "#f5f4ef", color: "#111827", fontFamily: "Ubuntu, system-ui, sans-serif" }}>
+      {/* Header */}
       <header style={{ background: "#072C2C", color: "#f5f4ef" }} className="px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-7 w-7" style={{ color: "#FF5F03" }} />
@@ -216,35 +232,44 @@ export default function HomePage() {
         </div>
       </header>
 
-      <nav className="px-6 pt-4 flex gap-1 border-b" style={{ borderColor: "#ddd8cc" }}>
-        {(["onboard", "documents", "admin", "dashboard"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            aria-pressed={activeTab === tab}
-            className="px-4 py-2 text-sm font-medium rounded-t transition-colors"
-            style={{
-              background: activeTab === tab ? "#072C2C" : "transparent",
-              color: activeTab === tab ? "#f5f4ef" : "#555",
-              borderBottom: activeTab === tab ? "2px solid #FF5F03" : "2px solid transparent",
-            }}
-          >
-            {tab === "onboard" ? "Register Vendor" : tab === "admin" ? "Admin Approval" : tab === "documents" ? "Documents" : "Dashboard"}
-          </button>
-        ))}
-      </nav>
+      <main className="px-6 py-6 max-w-7xl mx-auto space-y-8">
 
-      <main className="px-6 py-6 max-w-6xl mx-auto">
+        {/* Dashboard Metrics */}
+        <section aria-label="dashboard">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Dashboard Overview</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Total Vendors", value: vendors.length, icon: Building2, color: "#072C2C" },
+              { label: "Pending Review", value: pendingVendors.length, icon: Clock, color: "#D97706" },
+              { label: "Approved", value: approvedVendors.length, icon: CheckCircle, color: "#16A34A" },
+              { label: "Documents", value: documents.length, icon: FileCheck, color: "#FF5F03" },
+            ].map(({ label, value, icon: Icon, color }) => (
+              <Card key={label} style={{ background: "white", border: "1px solid #ddd8cc" }}>
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "#888" }}>{label}</p>
+                      <p className="text-3xl font-bold mt-1" style={{ color }}>{value}</p>
+                    </div>
+                    <Icon className="h-5 w-5 mt-1" style={{ color }} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
 
-        {activeTab === "onboard" && (
+        {/* Vendor Onboarding + Recent Vendors */}
+        <section aria-label="vendor onboarding">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Vendor Registration</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
                   <Building2 className="h-5 w-5" style={{ color: "#FF5F03" }} />
-                  Vendor Onboarding
+                  Register Vendor
                 </CardTitle>
-                <p className="text-sm" style={{ color: "#666" }}>Register a new vendor for compliance review</p>
+                <p className="text-sm" style={{ color: "#666" }}>Submit a new vendor for compliance review</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleVendorSubmit} className="space-y-4">
@@ -272,7 +297,7 @@ export default function HomePage() {
                     {submitting ? "Submitting..." : "Register Vendor"}
                   </Button>
                   {submitMsg && (
-                    <p className="text-sm mt-2" role="status" style={{ color: submitMsg.includes("failed") || submitMsg.includes("error") || submitMsg.includes("Error") ? "#DC2626" : "#16A34A" }}>
+                    <p className="text-sm mt-2" role="status" style={{ color: submitMsg.includes("failed") || submitMsg.includes("error") ? "#DC2626" : "#16A34A" }}>
                       {submitMsg}
                     </p>
                   )}
@@ -282,11 +307,11 @@ export default function HomePage() {
 
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
-                <CardTitle className="text-base" style={{ color: "#072C2C" }}>Recent Vendors</CardTitle>
+                <CardTitle className="text-base" style={{ color: "#072C2C" }}>Registered Vendors</CardTitle>
               </CardHeader>
               <CardContent>
                 {vendors.length === 0 ? (
-                  <p className="text-sm" style={{ color: "#888" }}>No vendors registered yet. Submit the form to get started.</p>
+                  <p className="text-sm" style={{ color: "#888" }}>No vendors registered yet. Use the form to get started.</p>
                 ) : (
                   <div className="space-y-3">
                     {vendors.slice(0, 8).map((v) => (
@@ -306,15 +331,17 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
-        )}
+        </section>
 
-        {activeTab === "documents" && (
+        {/* Document Upload/Record */}
+        <section aria-label="document upload">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Document Management</h2>
           <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
                   <Upload className="h-5 w-5" style={{ color: "#FF5F03" }} />
-                  Record Document
+                  Upload &amp; Record Document
                 </CardTitle>
                 <p className="text-sm" style={{ color: "#666" }}>Attach a compliance document to a vendor</p>
               </CardHeader>
@@ -375,19 +402,21 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
-        )}
+        </section>
 
-        {activeTab === "admin" && (
-          <div className="space-y-6">
+        {/* Admin Approval */}
+        <section aria-label="admin approval">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Admin Approval</h2>
+          <div className="space-y-4">
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
                   <ShieldCheck className="h-5 w-5" style={{ color: "#FF5F03" }} />
-                  Approve Vendor
+                  Review &amp; Approve Vendor
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-[1fr_2fr_auto] gap-3 items-end">
+                <div className="grid md:grid-cols-[1fr_2fr_auto_auto] gap-3 items-end">
                   <div>
                     <Label htmlFor="approve_vendor" className="text-sm font-medium">Vendor</Label>
                     <select id="approve_vendor" value={approveVendorId} onChange={(e) => setApproveVendorId(e.target.value)} className="mt-1 w-full rounded-md border px-3 py-2 text-sm" style={{ borderColor: "#ddd8cc", background: "white" }}>
@@ -401,8 +430,21 @@ export default function HomePage() {
                     <Label htmlFor="review_note" className="text-sm font-medium">Reviewer Note</Label>
                     <Input id="review_note" placeholder="Approved for canary" value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} className="mt-1" />
                   </div>
-                  <Button onClick={() => approveVendorId && handleApprove(approveVendorId, reviewNote)} disabled={approving || !approveVendorId} style={{ background: "#16A34A", color: "white" }}>
+                  <Button
+                    onClick={() => approveVendorId && handleApprove(approveVendorId, reviewNote)}
+                    disabled={approving || !approveVendorId}
+                    aria-label="Approve vendor"
+                    style={{ background: "#16A34A", color: "white" }}
+                  >
                     {approving ? "Approving..." : "Approve"}
+                  </Button>
+                  <Button
+                    onClick={() => approveVendorId && handleReject(approveVendorId)}
+                    disabled={approving || !approveVendorId}
+                    variant="destructive"
+                    aria-label="Reject vendor"
+                  >
+                    Reject
                   </Button>
                 </div>
                 {approveMsg && (
@@ -413,6 +455,7 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
+            {/* Approval table */}
             <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
               <CardHeader>
                 <CardTitle className="text-base" style={{ color: "#072C2C" }}>Vendor Review Queue</CardTitle>
@@ -465,59 +508,38 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
-        )}
+        </section>
 
-        {activeTab === "dashboard" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Total Vendors", value: vendors.length, icon: Building2, color: "#072C2C" },
-                { label: "Pending Review", value: pendingVendors.length, icon: Clock, color: "#D97706" },
-                { label: "Approved", value: approvedVendors.length, icon: CheckCircle, color: "#16A34A" },
-                { label: "Documents", value: totalDocs, icon: FileCheck, color: "#FF5F03" },
-              ].map(({ label, value, icon: Icon, color }) => (
-                <Card key={label} style={{ background: "white", border: "1px solid #ddd8cc" }}>
-                  <CardContent className="pt-5 pb-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide" style={{ color: "#888" }}>{label}</p>
-                        <p className="text-3xl font-bold mt-1" style={{ color }}>{value}</p>
+        {/* Notifications / Activity */}
+        <section aria-label="notifications activity">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: "#072C2C" }}>Notification Activity</h2>
+          <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
+                <Bell className="h-5 w-5" style={{ color: "#FF5F03" }} />
+                Recent Activity &amp; Notifications
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {notifications.length === 0 ? (
+                <p className="text-sm" style={{ color: "#888" }}>No activity recorded yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {notifications.slice(0, 15).map((n) => (
+                    <div key={n.id} className="flex items-start gap-3 py-2 border-b last:border-0" style={{ borderColor: "#f0ece3" }}>
+                      <div className="mt-1 h-2 w-2 rounded-full shrink-0" style={{ background: n.status === "unread" ? "#FF5F03" : "#ccc" }} />
+                      <div className="flex-1">
+                        <p className="text-sm" style={{ color: "#111827" }}>{n.message}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "#888" }}>{n.type} &middot; {new Date(n.createdAt).toLocaleString()}</p>
                       </div>
-                      <Icon className="h-5 w-5 mt-1" style={{ color }} />
+                      {n.status === "unread" && <Badge variant="outline" className="text-xs shrink-0">New</Badge>}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Card style={{ background: "white", border: "1px solid #ddd8cc" }}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base" style={{ color: "#072C2C" }}>
-                  <Bell className="h-5 w-5" style={{ color: "#FF5F03" }} />
-                  Activity &amp; Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {notifications.length === 0 ? (
-                  <p className="text-sm" style={{ color: "#888" }}>No activity recorded yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {notifications.slice(0, 15).map((n) => (
-                      <div key={n.id} className="flex items-start gap-3 py-2 border-b last:border-0" style={{ borderColor: "#f0ece3" }}>
-                        <div className="mt-1 h-2 w-2 rounded-full shrink-0" style={{ background: n.status === "unread" ? "#FF5F03" : "#ccc" }} />
-                        <div className="flex-1">
-                          <p className="text-sm" style={{ color: "#111827" }}>{n.message}</p>
-                          <p className="text-xs mt-0.5" style={{ color: "#888" }}>{n.type} &middot; {new Date(n.createdAt).toLocaleString()}</p>
-                        </div>
-                        {n.status === "unread" && <Badge variant="outline" className="text-xs shrink-0">New</Badge>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
 
       </main>
     </div>
